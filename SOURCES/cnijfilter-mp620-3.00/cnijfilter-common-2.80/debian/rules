@@ -1,0 +1,174 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# define package name
+COMMON_PKG=cnijfilter-common
+PRINTER_DEPEND_PKG+=cnijfilter-mp140-315
+PRINTER_DEPEND_PKG+=cnijfilter-mp210-316
+PRINTER_DEPEND_PKG+=cnijfilter-ip3500-319
+PRINTER_DEPEND_PKG+=cnijfilter-mp520-328
+PRINTER_DEPEND_PKG+=cnijfilter-ip4500-326
+PRINTER_DEPEND_PKG+=cnijfilter-mp610-327
+
+CFLAGS = -Wall -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	### configure common package
+	@echo "######## configure libs"; \
+	cd ./libs; ./autogen.sh --prefix=/usr
+	@echo "######## configure cngpij"; \
+	cd ./cngpij; ./autogen.sh --prefix=/usr --enable-progpath=/usr/bin
+	@echo "######## configure pstocanonij"; \
+	cd ./pstocanonij; ./autogen.sh --prefix=/usr --enable-progpath=/usr/bin
+	@echo "######## configure backend"; \
+	cd ./backend; ./autogen.sh --prefix=/usr --enable-progpath=/usr/bin
+
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp 
+	dh_testdir
+
+	# Add here commands to compile the package.
+	#$(MAKE)
+	#docbook-to-man debian/cnijfilter-common.sgml > cnijfilter-common.1
+
+	### build common package
+	@echo "######## compile libs"; \
+	cd ./libs; make
+	@echo "######## compile cngpij"; \
+	cd ./cngpij; make
+	@echo "######## compile pstocanonij"; \
+	cd ./pstocanonij; make
+	@echo "######## compile backend"; \
+	cd ./backend; make
+
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) clean
+
+	dh_clean 
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+
+	### install common package
+	@echo "######## install cngpij"; \
+	cd ./cngpij; make install DESTDIR=$(CURDIR)/debian/${COMMON_PKG}
+	@echo "######## install pstocanonij"; \
+	cd ./pstocanonij; make install DESTDIR=$(CURDIR)/debian/${COMMON_PKG}
+	@echo "######## install backend"; \
+	cd ./backend; make install DESTDIR=$(CURDIR)/debian/${COMMON_PKG}
+	
+
+	### configure/build/install printer depend package
+	@for pkg in ${PRINTER_DEPEND_PKG}; do \
+		model_name=`echo $${pkg} | cut -d- -f2` && \
+		comm_name=`echo $${pkg} | cut -d- -f1` && \
+		model_num=`echo $${pkg} | cut -d- -f3` && \
+		model_dir=$${comm_name}-$${model_name}series && \
+		deb_model_dir=$(CURDIR)/debian/$${model_dir}; \
+		echo "######## config/build/install ppd file($${model_dir})"; \
+		cd ./ppd && ./autogen.sh --prefix=/usr --enable-ppdpath=/usr/share/ppd --program-suffix=$${model_name} && \
+		make install DESTDIR=$${deb_model_dir} && cd ..; \
+		echo "######## config/build/install cnijfilter($${model_dir}) "; \
+		cd ./cnijfilter && ./autogen.sh --prefix=/usr --enable-libpath=/usr/lib/bjlib --enable-binpath=/usr/bin --program-suffix=$${model_name} && \
+		make && make install DESTDIR=$${deb_model_dir} && cd ..; \
+		echo "######## config/build/install printui($${model_dir}) "; \
+		cd ./printui && ./autogen.sh --prefix=/usr --program-suffix=$${model_name} && \
+		make && make install DESTDIR=$${deb_model_dir} && cd ..;\
+		echo "######## config/build/install lgmon($${model_dir}) "; \
+		cd ./lgmon && ./autogen.sh --prefix=/usr --enable-binpath=/usr/bin --program-suffix=$${model_name} && \
+		make && make install DESTDIR=$${deb_model_dir} && cd ..;\
+		echo "######## config/build/install cngpijmon($${model_dir}) "; \
+		cd ./cngpijmon && ./autogen.sh --prefix=/usr --program-suffix=$${model_name} && \
+		make && make install DESTDIR=$${deb_model_dir} && cd ..; \
+		echo "######## config/build/install library($${model_dir}) "; \
+		dh_install -s; \
+		mkdir -p $${deb_model_dir}/usr/lib; \
+		install -c -m 755 $${model_num}/libs_bin/libcnbpcmcm$${model_num}.so.* $${deb_model_dir}/usr/lib; \
+		install -c -m 755 $${model_num}/libs_bin/libcnbpcnclapi$${model_num}.so.* $${deb_model_dir}/usr/lib; \
+		install -c -m 755 $${model_num}/libs_bin/libcnbpcnclbjcmd$${model_num}.so.* $${deb_model_dir}/usr/lib; \
+		install -c -m 755 $${model_num}/libs_bin/libcnbpcnclui$${model_num}.so.* $${deb_model_dir}/usr/lib; \
+		install -c -m 755 $${model_num}/libs_bin/libcnbpess$${model_num}.so.* $${deb_model_dir}/usr/lib; \
+		install -c -m 755 $${model_num}/libs_bin/libcnbpo$${model_num}.so.* $${deb_model_dir}/usr/lib; \
+		mkdir -p $${deb_model_dir}/usr/lib/bjlib; \
+		install -c -m 644 $${model_num}/database/cif$${model_name}.conf $${deb_model_dir}/usr/lib/bjlib; \
+		install -c -m 644 $${model_num}/database/cnb_$${model_num}0.tbl $${deb_model_dir}/usr/lib/bjlib; \
+		install -c -m 644 $${model_num}/database/cnbpname$${model_num}.tbl $${deb_model_dir}/usr/lib/bjlib; \
+		if [ -f $${model_num}/database/cif$${model_name}.bscc ]; then \
+			install -c -m 644 $${model_num}/database/cif$${model_name}.bscc $${deb_model_dir}/usr/lib/bjlib; \
+		fi; \
+	done
+
+	# Add here commands to install the package into debian/cnijfilter-common.
+	#$(MAKE) install DESTDIR=$(CURDIR)/debian/cnijfilter-common
+
+	touch $@
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs 
+	dh_installdocs
+	dh_installexamples
+#	dh_install
+#	dh_installmenu
+#	dh_installdebconf	
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+#	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_perl
+#	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
