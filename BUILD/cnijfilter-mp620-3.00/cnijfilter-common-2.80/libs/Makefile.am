@@ -1,1 +1,0 @@
-SUBDIRS=bjexec paramlist buftool
