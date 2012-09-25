@@ -17,8 +17,8 @@ Patch5:		ppd.patch
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-#BuildRequires
-#Requires:
+BuildRequires: cups-devel,libtiff-devel,libpng-devel,popt-devel
+Requires: cups,libtiff,libpng,popt
 
 %description
 A port of the Arch Linux AUR's cnijfilter-mp620 package by mouse256: 
