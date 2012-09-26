@@ -41,22 +41,22 @@ cd ../ppdMP620-630en-1.5
 
 %build
 cd %{_builddir}/%{buildsubdir}/cnijfilter-common-3.00/libs
-./autogen.sh --prefix=/usr ${buildroot}${_libdir} || return 1
+./autogen.sh --prefix=/usr || return 1
 
 cd %{_builddir}/%{buildsubdir}/cnijfilter-common-3.00/cngpij
-./autogen.sh --prefix=/usr --enable-progpath=/usr/bin ${buildroot}${_libdir} || return 1
+./autogen.sh --prefix=/usr --enable-progpath=/usr/bin || return 1
 
 cd %{_builddir}/%{buildsubdir}/cnijfilter-common-3.00/pstocanonij
-./autogen.sh --prefix=/usr --enable-progpath=/usr/bin ${buildroot}${_libdir} || return 1
+./autogen.sh --prefix=/usr --enable-progpath=/usr/bin || return 1
 
 cd %{_builddir}/%{buildsubdir}/cnijfilter-common-3.00/backend
-./autogen.sh --prefix=/usr --enable-progpath=/usr/bin ${buildroot}${_libdir} || return 1
+./autogen.sh --prefix=/usr --enable-progpath=/usr/bin || return 1
 	
 cd %{_builddir}/%{buildsubdir}/cnijfilter-common-3.00
 make || return 1
 
 cd %{_builddir}/%{buildsubdir}/cnijfilter-common-3.00/cnijfilter
-./autogen.sh --prefix=/usr --program-suffix=mp610 ${buildroot}${_libdir} --enable-libpath=/usr/lib/bjlib --enable-binpath=/usr/bin || return 1
+./autogen.sh --prefix=/usr --program-suffix=mp610 --enable-libpath=/usr/lib/bjlib --enable-binpath=/usr/bin || return 1
 make || return 1
 
 %install
