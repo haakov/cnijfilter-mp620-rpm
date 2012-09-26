@@ -29,12 +29,6 @@ Canon drivers for the MP620 printer/scanner with improved PPD files
 %prep
 %setup -q -n %{name}-%{version}
 
-if [ "${CARCH}" = 'x86_64' ]; then
-	export CC="gcc -m32"
-	export CXX="g++ -m32"
-	export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
-	LIBDIR="--libdir=/usr/lib32"
-fi
 
 cd cnijfilter-common-3.00
 ln -s ../cnijfilter-common-2.80/327 327
@@ -70,14 +64,6 @@ cd cnijfilter-common-3.00
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 
-if [ "${CARCH}" = 'x86_64' ]; then
-	#hack
-	mkdir -p %{buildroot}/usr/lib/cups/filter
-	mv %{buildroot}/usr/lib32/cups/filter/pstocanonij %{buildroot}/usr/lib/cups/filter/pstocanonij
-	rmdir %{buildroot}/usr/lib32/cups/filter
-	rmdir %{buildroot}/usr/lib32/cups/
-	rmdir %{buildroot}/usr/lib32
-fi
 
 install -d %{buildroot}/usr/lib/bjlib
 install 327/database/*.tbl %{buildroot}/usr/lib/bjlib
